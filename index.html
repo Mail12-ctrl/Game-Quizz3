@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Pixel RPG Quiz</title>
+<style>
+body {
+    background: black;
+    color: white;
+    text-align: center;
+    font-family: monospace;
+}
+canvas {
+    border: 3px solid white;
+    margin-top: 10px;
+}
+#battleUI {
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🗺️ Pixel RPG Quiz</h2>
+
+<canvas id="gameCanvas" width="300" height="300"></canvas>
+
+<div id="battleUI">
+    <h3 id="monsterName"></h3>
+    <div id="question"></div>
+    <input id="answer">
+    <br>
+    <button onclick="submitAnswer()">Jawab</button>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let tileSize = 30;
+
+// Player
+let player = {x: 1, y: 1, hp: 100};
+
+// Monster
+let monster = {x: 5, y: 5, lv: 1, hp: 20};
+
+let inBattle = false;
+let correctAnswer = "";
+
+// MAP (0 = jalan, 1 = tembok)
+let map = [
+[1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,1,0,0,0,0,1],
+[1,0,0,0,1,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,1],
+[1,1,1,1,1,1,1,1,1,1],
+];
+
+// DRAW
+function draw() {
+    ctx.clearRect(0,0,300,300);
+
+    for(let y=0;y<10;y++){
+        for(let x=0;x<10;x++){
+            if(map[y][x] === 1){
+                ctx.fillStyle = "gray";
+            } else {
+                ctx.fillStyle = "black";
+            }
+            ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+        }
+    }
+
+    // player
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(player.x*tileSize, player.y*tileSize, tileSize, tileSize);
+
+    // monster
+    ctx.fillStyle = "red";
+    ctx.fillRect(monster.x*tileSize, monster.y*tileSize, tileSize, tileSize);
+}
+
+// GERAK
+document.addEventListener("keydown", e => {
+    if(inBattle) return;
+
+    let newX = player.x;
+    let newY = player.y;
+
+    if(e.key === "ArrowUp") newY--;
+    if(e.key === "ArrowDown") newY++;
+    if(e.key === "ArrowLeft") newX--;
+    if(e.key === "ArrowRight") newX++;
+
+    if(map[newY][newX] === 0){
+        player.x = newX;
+        player.y = newY;
+    }
+
+    checkBattle();
+    draw();
+});
+
+// CEK TABRAKAN
+function checkBattle(){
+    if(player.x === monster.x && player.y === monster.y){
+        startBattle();
+    }
+}
+
+// GENERATE SOAL CAMPURAN
+function generateQuestion(){
+    let type = Math.floor(Math.random()*5);
+
+    if(monster.lv < 3){
+        if(type === 0){
+            let a = 2, b = 3;
+            correctAnswer = (a+b).toString();
+            return `${a}+${b}?`;
+        }
+        if(type === 1){
+            correctAnswer = "jakarta";
+            return "Ibukota Indonesia?";
+        }
+        if(type === 2){
+            correctAnswer = "soekarno";
+            return "Presiden pertama Indonesia?";
+        }
+        if(type === 3){
+            correctAnswer = "matahari";
+            return "Sumber energi bumi?";
+        }
+        correctAnswer = "go";
+        return "Bahasa Inggris 'pergi'?";
+    } else {
+        correctAnswer = "asia";
+        return "Benua terbesar?";
+    }
+}
+
+// START BATTLE
+function startBattle(){
+    inBattle = true;
+    document.getElementById("battleUI").style.display = "block";
+    document.getElementById("monsterName").innerText = "👾 Monster LV " + monster.lv;
+    document.getElementById("question").innerText = generateQuestion();
+}
+
+// JAWAB
+function submitAnswer(){
+    let user = document.getElementById("answer").value.toLowerCase();
+
+    if(user === correctAnswer){
+        monster.hp -= 10;
+        alert("Hit!");
+    } else {
+        player.hp -= 10;
+        alert("Salah!");
+    }
+
+    if(monster.hp <= 0){
+        alert("Monster kalah!");
+        monster.lv++;
+        monster.hp = 20 + monster.lv*5;
+        monster.x = Math.floor(Math.random()*8)+1;
+        monster.y = Math.floor(Math.random()*8)+1;
+        endBattle();
+    }
+
+    if(player.hp <= 0){
+        alert("Game Over");
+        location.reload();
+    }
+
+    document.getElementById("question").innerText = generateQuestion();
+}
+
+// END BATTLE
+function endBattle(){
+    inBattle = false;
+    document.getElementById("battleUI").style.display = "none";
+    draw();
+}
+
+// START
+draw();
+</script>
+
+</body>
+  </html>
